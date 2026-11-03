@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Rent {{ vehicle.brand }} {{ vehicle.name }} | WheelsOnRent{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-image-box {
+    border-radius: 16px;
+    overflow: hidden;
+    height: 400px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .detail-image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .spec-grid-item {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  }
+
+  .spec-grid-item svg {
+    color: var(--accent-color);
+    margin-bottom: 8px;
+  }
+
+  .spec-label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .spec-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-top: 4px;
+  }
+
+  .booking-card {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    position: sticky;
+    top: 100px;
+  }
+
+  .pricing-box {
+    background-color: var(--bg-light);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px dashed var(--accent-color);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+  <div class="container py-5">
+    
+    <!-- Back Button link -->
+    <a href="{% url 'home' %}" class="btn btn-link text-decoration-none text-muted mb-4 d-inline-flex align-items-center gap-1">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" style="transform: rotate(180deg)">
+        <path d="M9 5l7 7-7 7"></path>
+      </svg>
+      Back to Search Catalog
+    </a>
+
+    <div class="row g-5">
+      
+      <!-- Left Column: Specs, details, image -->
+      <div class="col-lg-7">
+        
+        <!-- Large image -->
+        <div class="detail-image-box mb-4">
+          {% if vehicle.image %}
+            <img src="{{ vehicle.image.url }}" alt="{{ vehicle.name }}">
+          {% else %}
+            <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white">No Image Available</div>
+          {% endif %}
+        </div>
+
+        <span class="text-uppercase text-muted fw-bold font-monospace" style="letter-spacing: 1px;">{{ vehicle.brand }}</span>
+        <h1 class="fw-extrabold text-dark mt-1 mb-3">{{ vehicle.name }}</h1>
+        <p class="lead text-muted mb-5">{{ vehicle.description }}</p>
+
+        <!-- Specifications Grid -->
+        <h4 class="fw-bold mb-4">Vehicle Specifications</h4>
+        <div class="row row-cols-2 row-cols-sm-3 g-3 mb-5">
+          <div class="col">
+            <div class="spec-grid-item">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M19 10v1a7 7 0 01-14 0v-1M12 3v10m-3-3l3 3 3-3"></path>
+              </svg>
+              <div class="spec-label">Transmission</div>
+              <div class="spec-value">{{ vehicle.get_transmission_display }}</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="spec-grid-item">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path>
+              </svg>
+              <div class="spec-label">Fuel Type</div>
+              <div class="spec-value">{{ vehicle.get_fuel_type_display }}</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="spec-grid-item">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8z"></path>
+              </svg>
+              <div class="spec-label">Seating</div>
+              <div class="spec-value">{{ vehicle.seating_capacity }} Seater</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="spec-grid-item">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <div class="spec-label">Year Model</div>
+              <div class="spec-value">{{ vehicle.model_year }}</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="spec-grid-item">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <div class="spec-label">Plate Reg.</div>
+              <div class="spec-value font-monospace" style="font-size: 13px;">{{ vehicle.registration_number }}</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="spec-grid-item">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 4v6l4 2"></path>
+              </svg>
+              <div class="spec-label">Status</div>
+              <div class="spec-value text-success">Available</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Booking Reservation Form -->
+      <div class="col-lg-5">
+        
+        <div class="booking-card">
+          <h3 class="fw-bold mb-4">Book This Vehicle</h3>
+          <div class="mb-4 d-flex justify-content-between align-items-center">
+            <span class="text-muted">Daily Rental Rate</span>
+            <span class="fs-4 fw-extrabold text-primary">₹{{ vehicle.price_per_day|floatformat:0 }}<small class="fs-6 text-muted fw-normal">/day</small></span>
+          </div>
+
+          <form method="POST" id="booking-form" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% if user.is_authenticated %}
+            <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 12px; letter-spacing: 0.5px;">Your Details</h6>
+            {% for field in details_form %}
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger" style="font-size: 12px;">{{ field.errors.0 }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+            <hr class="my-4">
+            {% endif %}
+
+            <div class="mb-3">
+              <label for="start_date" class="form-label fw-semibold">Pickup Date</label>
+              <input type="date" class="form-control" id="start_date" name="start_date" required>
+            </div>
+
+            <div class="mb-4">
+              <label for="end_date" class="form-label fw-semibold">Return Date</label>
+              <input type="date" class="form-control" id="end_date" name="end_date" required>
+            </div>
+
+            <!-- Dynamic Pricing Display -->
+            <div class="pricing-box mb-4 d-none" id="pricing-box">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted" id="pricing-calc">₹{{ vehicle.price_per_day|floatformat:0 }} x 1 day</span>
+                <span id="sub-total">₹0</span>
+              </div>
+              <hr class="my-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <strong class="text-dark">Total Price</strong>
+                <strong class="fs-4 text-primary" id="total-price">₹0</strong>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              {% if user.is_authenticated %}
+                <button type="submit" class="btn btn-custom-primary btn-lg py-3 fs-5" id="btn-submit-booking">Proceed to Payment</button>
+              {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-custom-primary btn-lg py-3 fs-5">Login to Book</a>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    const pricingBox = document.getElementById('pricing-box');
+    const pricingCalc = document.getElementById('pricing-calc');
+    const subTotalText = document.getElementById('sub-total');
+    const totalPriceText = document.getElementById('total-price');
+
+    const pricePerDay = parseFloat("{{ vehicle.price_per_day }}");
+
+    // Restrict dates to >= today
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.min = today;
+    endDateInput.min = today;
+
+    // Listen to changes
+    startDateInput.addEventListener('change', updatePricing);
+    endDateInput.addEventListener('change', updatePricing);
+
+    function updatePricing() {
+      const startVal = startDateInput.value;
+      const endVal = endDateInput.value;
+
+      if (!startVal) return;
+      
+      // Keep return date >= pickup date
+      endDateInput.min = startVal;
+
+      if (!endVal) return;
+
+      const date1 = new Date(startVal);
+      const date2 = new Date(endVal);
+
+      if (date2 < date1) {
+        pricingBox.classList.add('d-none');
+        return;
+      }
+
+      // Calculate days diff
+      const timeDiff = Math.abs(date2.getTime() - date1.getTime());
+      let diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      
+      if (diffDays === 0) {
+        diffDays = 1; // Min 1 day charge
+      }
+
+      const totalCost = diffDays * pricePerDay;
+
+      // Update UI
+      pricingCalc.textContent = `₹${pricePerDay.toLocaleString('en-IN')} x ${diffDays} day${diffDays > 1 ? 's' : ''}`;
+      subTotalText.textContent = `₹${totalCost.toLocaleString('en-IN')}`;
+      totalPriceText.textContent = `₹${totalCost.toLocaleString('en-IN')}`;
+      pricingBox.classList.remove('d-none');
+    }
+  });
+</script>
+{% endblock %}

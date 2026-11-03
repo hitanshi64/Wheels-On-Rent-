@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}My Booking History | WheelsOnRent{% endblock %}
+
+{% block extra_css %}
+<style>
+  .booking-item-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    margin-bottom: 24px;
+    transition: all 0.2s ease;
+  }
+
+  .booking-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+  }
+
+  .thumb-box {
+    width: 140px;
+    height: 100px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .thumb-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Custom Status Badges */
+  .status-badge-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 30px;
+    display: inline-block;
+  }
+
+  .status-badge-confirmed {
+    background-color: #dbeafe;
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 30px;
+    display: inline-block;
+  }
+
+  .status-badge-completed {
+    background-color: #d1fae5;
+    color: #059669;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 30px;
+    display: inline-block;
+  }
+
+  .status-badge-cancelled {
+    background-color: #fee2e2;
+    color: #dc2626;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 30px;
+    display: inline-block;
+  }
+
+  .timeline-meta {
+    font-size: 14px;
+    color: #64748b;
+  }
+
+  .timeline-value {
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+  <div class="container py-5">
+    
+    <div class="row mb-5">
+      <div class="col-12">
+        <h1 class="fw-extrabold text-dark mb-2">My Booking Dashboard</h1>
+        <p class="text-muted">Manage your active reservations, check approval timeline, or view previous booking invoices.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-10 mx-auto">
+        
+        {% for booking in bookings %}
+          <div class="booking-item-card p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4">
+            
+            <div class="d-flex align-items-center gap-3">
+              <!-- Thumbnail -->
+              <div class="thumb-box d-none d-sm-block">
+                {% if booking.vehicle.image %}
+                  <img src="{{ booking.vehicle.image.url }}" alt="{{ booking.vehicle.name }}">
+                {% else %}
+                  <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white">No Image</div>
+                {% endif %}
+              </div>
+              
+              <!-- Core Info -->
+              <div>
+                <span class="text-uppercase text-muted fw-bold" style="font-size: 11px;">Booking Reference #WOR-0{{ booking.id }}</span>
+                <h4 class="fw-bold mb-2 mt-1 text-dark">{{ booking.vehicle.brand }} {{ booking.vehicle.name }}</h4>
+                <div class="d-flex flex-wrap gap-x-4 gap-y-1 timeline-meta mb-2">
+                  <span class="me-3">Pickup: <span class="timeline-value">{{ booking.start_date|date:"d M Y" }}</span></span>
+                  <span>Return: <span class="timeline-value">{{ booking.end_date|date:"d M Y" }}</span></span>
+                </div>
+                <!-- Payment Meta -->
+                <div class="timeline-meta" style="font-size: 13px;">
+                  <span class="me-3">Payment: <strong>{{ booking.get_payment_method_display }}</strong></span>
+                  {% if booking.transaction_id %}
+                    <span>Txn ID: <strong class="font-monospace text-secondary" style="font-size: 12px;">{{ booking.transaction_id }}</strong></span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Price and Status -->
+            <div class="d-flex flex-row flex-md-column justify-content-between align-items-md-end gap-3 border-top border-md-top-0 pt-3 pt-md-0">
+              <div>
+                <span class="text-muted d-block text-md-end" style="font-size: 12px;">Total Cost</span>
+                <strong class="fs-4 text-primary">₹{{ booking.total_price|floatformat:0 }}</strong>
+              </div>
+              
+              <div class="d-flex flex-column gap-2 align-items-md-end">
+                <!-- Booking Status -->
+                <div>
+                  {% if booking.status == 'pending' %}
+                    <span class="status-badge-pending">Pending Approval</span>
+                  {% elif booking.status == 'confirmed' %}
+                    <span class="status-badge-confirmed">Confirmed</span>
+                  {% elif booking.status == 'completed' %}
+                    <span class="status-badge-completed">Completed</span>
+                  {% else %}
+                    <span class="status-badge-cancelled">Cancelled</span>
+                  {% endif %}
+                </div>
+
+                <!-- Payment Status -->
+                <div>
+                  {% if booking.payment_status == 'paid' %}
+                    <span class="badge bg-success py-2 px-3 rounded-pill fw-bold" style="font-size: 11px;">Paid</span>
+                  {% elif booking.payment_status == 'pending' %}
+                    <span class="badge bg-warning text-dark py-2 px-3 rounded-pill fw-bold" style="font-size: 11px;">Payment Pending</span>
+                  {% else %}
+                    <span class="badge bg-danger py-2 px-3 rounded-pill fw-bold" style="font-size: 11px;">Payment Failed</span>
+                  {% endif %}
+                </div>
+
+                <!-- Cancel button / Refund status -->
+                {% if booking.status == 'cancelled' %}
+                  {% if booking.refund_status == 'pending' %}
+                    <div class="text-md-end" style="font-size: 12px;">
+                      <span class="badge bg-warning text-dark py-2 px-3 rounded-pill fw-bold mb-1" style="font-size: 11px;">Refund Pending</span>
+                      <div class="text-muted">₹{{ booking.refund_amount|floatformat:0 }} by {{ booking.refund_due_date|date:"d M Y" }}</div>
+                    </div>
+                  {% elif booking.refund_status == 'refunded' %}
+                    <span class="badge bg-success py-2 px-3 rounded-pill fw-bold" style="font-size: 11px;">Refunded ₹{{ booking.refund_amount|floatformat:0 }}</span>
+                  {% endif %}
+                {% elif booking.can_be_cancelled %}
+                  <form method="POST" action="{% url 'cancel_booking' booking.id %}" onsubmit="return confirm('Cancel this booking? A 25% cancellation penalty applies — you will receive a 75% refund within 1 week if payment was already made.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm fw-bold">Cancel Booking</button>
+                  </form>
+                {% else %}
+                  {% if booking.status != 'completed' %}
+                    <span class="text-muted" style="font-size: 11.5px;">Cancellation window closed (within 3 hrs of pickup)</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        {% empty %}
+          <!-- Empty Dashboard Page State -->
+          <div class="text-center py-5">
+            <div class="mb-4">
+              <svg width="64" height="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" class="text-muted">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+            </div>
+            <h3 class="fw-bold text-secondary">No Rental Bookings Yet</h3>
+            <p class="text-muted max-width-500 mx-auto">You haven't requested any vehicle rentals. Go back to browse and request your first ride!</p>
+            <a href="{% url 'home' %}" class="btn btn-custom-primary mt-4">Browse Rental Fleet</a>
+          </div>
+        {% endfor %}
+
+      </div>
+    </div>
+
+  </div>
+
+{% endblock %}

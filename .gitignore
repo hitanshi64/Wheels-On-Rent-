@@ -1,0 +1,10 @@
+.venv/
+myenv/
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
+.env
+
+# Personal documents
+media/license_documents/

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}About Us | WheelsOnRent{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <h1 class="fw-extrabold mb-4">About WheelsOnRent</h1>
+      <p class="lead text-muted">
+        WheelsOnRent is a vehicle rental platform built for India, offering everything
+        from bicycles and Activas to bikes and cars — all on one easy-to-use website.
+      </p>
+
+      <div class="row g-4 my-4">
+        <div class="col-md-4">
+          <div class="premium-card p-4 h-100">
+            <h5 class="fw-bold">Our Mission</h5>
+            <p class="text-muted mb-0">Make renting a vehicle as simple as a few clicks — affordable, transparent, and available across major Indian cities.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="premium-card p-4 h-100">
+            <h5 class="fw-bold">Wide Fleet</h5>
+            <p class="text-muted mb-0">Choose from cycles, scooters/Activas, motorcycles, and cars depending on your trip and budget.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="premium-card p-4 h-100">
+            <h5 class="fw-bold">Safe & Verified</h5>
+            <p class="text-muted mb-0">We collect basic renter and licence details before every booking to keep our fleet and community safe.</p>
+          </div>
+        </div>
+      </div>
+
+      <h4 class="fw-bold mt-5 mb-3">How It Works</h4>
+      <ol class="text-muted" style="line-height: 2;">
+        <li>Create a free account with your name, email, and phone number.</li>
+        <li>Browse available bikes, cycles, cars, and Activas near you.</li>
+        <li>Pick your dates, share your licence details, and confirm your booking.</li>
+        <li>Pay online or at pickup, then enjoy the ride!</li>
+      </ol>
+
+      <p class="text-muted mt-4">
+        Have questions? Visit our <a href="{% url 'contact' %}">Contact page</a> — we'd love to hear from you.
+      </p>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

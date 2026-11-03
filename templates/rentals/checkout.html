@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout & Payment | WheelsOnRent{% endblock %}
+
+{% block extra_css %}
+<style>
+  .checkout-container {
+    max-width: 900px;
+    margin: 50px auto;
+  }
+
+  .payment-method-btn {
+    border: 2px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    color: #475569;
+  }
+
+  .payment-method-btn:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+
+  .payment-method-btn.active {
+    border-color: var(--accent-color);
+    background: #eff6ff;
+    color: var(--accent-hover);
+  }
+
+  .payment-details-panel {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .payment-details-panel.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Full Screen Overlay Loader */
+  .payment-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.95);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .payment-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .spinner-ring {
+    width: 64px;
+    height: 64px;
+    border: 6px solid rgba(255,255,255,0.1);
+    border-radius: 50%;
+    border-top-color: var(--accent-color);
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .qr-code-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    display: inline-block;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+  <div class="container checkout-container">
+    <div class="row g-4">
+      
+      <!-- Left Column: Booking Summary -->
+      <div class="col-lg-5">
+        <div class="card premium-card p-4">
+          <h4 class="fw-bold mb-4">Rental Summary</h4>
+          
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div style="width: 80px; height: 60px; border-radius: 8px; overflow: hidden;">
+              {% if booking.vehicle.image %}
+                <img src="{{ booking.vehicle.image.url }}" alt="{{ booking.vehicle.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+              {% else %}
+                <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white" style="font-size: 10px;">No Image</div>
+              {% endif %}
+            </div>
+            <div>
+              <span class="text-uppercase text-muted fw-bold font-monospace" style="font-size: 11px;">{{ booking.vehicle.brand }}</span>
+              <h5 class="fw-bold text-dark m-0">{{ booking.vehicle.name }}</h5>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Pickup Date</span>
+            <strong class="text-dark">{{ booking.start_date|date:"d M Y" }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-muted">Return Date</span>
+            <strong class="text-dark">{{ booking.end_date|date:"d M Y" }}</strong>
+          </div>
+
+          <div class="pricing-box bg-light border border-slate-200 rounded-3 p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted font-semibold">Total Cost</span>
+              <strong class="fs-4 text-primary">₹{{ booking.total_price|floatformat:0 }}</strong>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Column: Payment Form -->
+      <div class="col-lg-7">
+        <div class="card premium-card p-4">
+          <h4 class="fw-bold mb-4">Select Payment Method</h4>
+
+          <form method="POST" id="checkout-form">
+            {% csrf_token %}
+            <input type="hidden" name="payment_method" id="selected-payment-method" value="upi">
+
+            <!-- Selection Grid -->
+            <div class="row row-cols-2 g-3 mb-4">
+              <div class="col">
+                <div class="payment-method-btn active" data-value="upi">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                    <path d="M8 12h8m-4-4l4 4-4 4"></path>
+                  </svg>
+                  UPI
+                </div>
+              </div>
+              <div class="col">
+                <div class="payment-method-btn" data-value="card">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M3 10h18M7 15h1m4 0h3m-7 7h12a3 3 0 003-3V5a3 3 0 00-3-3H6a3 3 0 00-3 3v12a3 3 0 003 3z"></path>
+                  </svg>
+                  Card
+                </div>
+              </div>
+              <div class="col">
+                <div class="payment-method-btn" data-value="netbanking">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M3 21h18M3 10h18M5 10V6a2 2 0 012-2h10a2 2 0 012 2v4M12 14v3M7 14v3M17 14v3"></path>
+                  </svg>
+                  Netbanking
+                </div>
+              </div>
+              <div class="col">
+                <div class="payment-method-btn" data-value="pay_at_store">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                  </svg>
+                  Pay at Store
+                </div>
+              </div>
+            </div>
+
+            <!-- UPI Details Form -->
+            <div class="payment-details-panel active" id="panel-upi">
+              <div class="text-center mb-4">
+                <p class="text-muted mb-3">Scan the QR code with any UPI App (GPay/PhonePe/Paytm)</p>
+                <div class="qr-code-box">
+                  <!-- Custom inline simple SVG representing a mock QR Code -->
+                  <svg width="150" height="150" viewBox="0 0 100 100" style="color: var(--primary-color)">
+                    <rect width="100" height="100" fill="#f8fafc" rx="4"/>
+                    <!-- QR Box Finder 1 -->
+                    <rect x="10" y="10" width="25" height="25" fill="currentColor"/>
+                    <rect x="15" y="15" width="15" height="15" fill="#f8fafc"/>
+                    <rect x="18" y="18" width="9" height="9" fill="currentColor"/>
+                    <!-- QR Box Finder 2 -->
+                    <rect x="65" y="10" width="25" height="25" fill="currentColor"/>
+                    <rect x="70" y="15" width="15" height="15" fill="#f8fafc"/>
+                    <rect x="73" y="18" width="9" height="9" fill="currentColor"/>
+                    <!-- QR Box Finder 3 -->
+                    <rect x="10" y="65" width="25" height="25" fill="currentColor"/>
+                    <rect x="15" y="70" width="15" height="15" fill="#f8fafc"/>
+                    <rect x="18" y="73" width="9" height="9" fill="currentColor"/>
+                    <!-- Mock dots/pixels -->
+                    <rect x="45" y="20" width="5" height="5" fill="currentColor"/>
+                    <rect x="55" y="15" width="5" height="10" fill="currentColor"/>
+                    <rect x="45" y="45" width="10" height="5" fill="currentColor"/>
+                    <rect x="75" y="45" width="10" height="10" fill="currentColor"/>
+                    <rect x="65" y="75" width="10" height="5" fill="currentColor"/>
+                    <rect x="45" y="65" width="5" height="15" fill="currentColor"/>
+                    <rect x="80" y="65" width="5" height="10" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div class="mt-2 text-primary fw-bold">₹{{ booking.total_price|floatformat:0 }}</div>
+              </div>
+              <div class="mb-3">
+                <label for="upi_id" class="form-label fw-semibold">Or Enter UPI ID</label>
+                <input type="text" class="form-control py-2 fs-6" id="upi_id" placeholder="e.g. mobile@okaxis">
+              </div>
+            </div>
+
+            <!-- Card Details Form -->
+            <div class="payment-details-panel" id="panel-card">
+              <div class="mb-3">
+                <label for="card_number" class="form-label fw-semibold">Card Number</label>
+                <input type="text" class="form-control py-2 fs-6" id="card_number" placeholder="4111 2222 3333 4444" maxlength="19">
+              </div>
+              <div class="row">
+                <div class="col-6 mb-3">
+                  <label for="card_expiry" class="form-label fw-semibold">Expiry Date</label>
+                  <input type="text" class="form-control py-2 fs-6" id="card_expiry" placeholder="MM/YY" maxlength="5">
+                </div>
+                <div class="col-6 mb-3">
+                  <label for="card_cvv" class="form-label fw-semibold">CVV</label>
+                  <input type="password" class="form-control py-2 fs-6" id="card_cvv" placeholder="123" maxlength="3">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="card_name" class="form-label fw-semibold">Cardholder Name</label>
+                <input type="text" class="form-control py-2 fs-6" id="card_name" placeholder="Name on card">
+              </div>
+            </div>
+
+            <!-- Netbanking Details Form -->
+            <div class="payment-details-panel" id="panel-netbanking">
+              <div class="mb-4">
+                <label for="bank_select" class="form-label fw-semibold">Select Your Bank</label>
+                <select class="form-select py-2 fs-6" id="bank_select">
+                  <option selected disabled>Choose Bank</option>
+                  <option>State Bank of India (SBI)</option>
+                  <option>HDFC Bank</option>
+                  <option>ICICI Bank</option>
+                  <option>Axis Bank</option>
+                  <option>Kotak Mahindra Bank</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Pay at Store Panel -->
+            <div class="payment-details-panel" id="panel-pay_at_store">
+              <div class="alert alert-info border-0 rounded-3">
+                <strong>Pay on Pickup:</strong> You can pay via Cash or UPI directly at the store counter when pick up the vehicle. No pre-payment required.
+              </div>
+            </div>
+
+            <!-- Terms & Conditions -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Terms &amp; Conditions</label>
+              <div class="border rounded-3 p-3 bg-light" style="max-height: 220px; overflow-y: auto; font-size: 13.5px; line-height: 1.7; color: #475569;">
+                <ul class="mb-2 ps-3">
+                  <li>A valid identity proof and driving licence may be verified at the time of pickup.</li>
+                  <li>The booking may be cancelled if the documents provided are incorrect or invalid.</li>
+                  <li>The vehicle must not be used for any illegal activities.</li>
+                  <li>The user is responsible for ensuring that all information provided during the booking is accurate.</li>
+                  <li>The user is responsible for any misuse of their account.</li>
+                  <li>The admin may cancel a booking if the vehicle is unavailable, under maintenance, or due to other operational reasons. In such cases, the applicable payment/refund policy will be followed.</li>
+                  <li><strong>Cancellation Policy:</strong> A 25% cancellation penalty will be charged on any cancelled booking. Bookings can only be cancelled up to 3 hours before the scheduled pickup time — cancellations are not permitted after that.</li>
+                  <li><strong>Fuel Policy:</strong> The vehicle is provided without fuel. The company does not supply petrol/fuel — please refuel as needed.</li>
+                </ul>
+                <p class="mb-0 fw-semibold text-dark">The booking cannot be completed without accepting the Terms &amp; Conditions.</p>
+              </div>
+              <div class="form-check mt-3">
+                <input class="form-check-input" type="checkbox" name="terms_accepted" id="terms_accepted" required>
+                <label class="form-check-label fw-semibold" for="terms_accepted">
+                  I Agree to the Terms &amp; Conditions
+                </label>
+              </div>
+            </div>
+
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-custom-primary btn-lg py-3 fs-5" id="btn-pay-confirm" disabled>
+                Confirm & Pay ₹{{ booking.total_price|floatformat:0 }}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Gateway Simulation Overlay -->
+  <div class="payment-overlay" id="payment-loader">
+    <div class="spinner-ring"></div>
+    <h3 class="fw-bold mb-2">Connecting to Secure Gateway</h3>
+    <p class="text-white-50">Please do not refresh this page or close the window...</p>
+  </div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if razorpay %}{{ razorpay|json_script:"razorpay-data" }}{% endif %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  const RAZORPAY_ENABLED = {% if razorpay_enabled %}true{% else %}false{% endif %};
+  document.addEventListener('DOMContentLoaded', () => {
+    // After the server created a Razorpay order, open the real payment popup
+    const rzpEl = document.getElementById('razorpay-data');
+    if (rzpEl) {
+      const d = JSON.parse(rzpEl.textContent);
+      const options = {
+        key: d.key_id,
+        amount: d.amount,
+        currency: 'INR',
+        name: 'WheelsOnRent',
+        description: 'Vehicle rental booking',
+        order_id: d.order_id,
+        prefill: { name: d.name, email: d.email, contact: d.phone },
+        theme: { color: '#2563eb' },
+        handler: function (response) {
+          const f = document.createElement('form');
+          f.method = 'POST';
+          f.action = d.verify_url;
+          const fields = {
+            csrfmiddlewaretoken: document.querySelector('[name=csrfmiddlewaretoken]').value,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature
+          };
+          Object.keys(fields).forEach(k => {
+            const i = document.createElement('input');
+            i.type = 'hidden'; i.name = k; i.value = fields[k];
+            f.appendChild(i);
+          });
+          document.body.appendChild(f);
+          f.submit();
+        }
+      };
+      new Razorpay(options).open();
+    }
+
+    const paymentButtons = document.querySelectorAll('.payment-method-btn');
+    const paymentMethodInput = document.getElementById('selected-payment-method');
+    const detailPanels = document.querySelectorAll('.payment-details-panel');
+    const checkoutForm = document.getElementById('checkout-form');
+    const payConfirmBtn = document.getElementById('btn-pay-confirm');
+    const paymentLoader = document.getElementById('payment-loader');
+
+    // Pay button stays disabled until Terms & Conditions checkbox is checked
+    const termsCheckbox = document.getElementById('terms_accepted');
+    if (termsCheckbox) {
+      termsCheckbox.addEventListener('change', () => {
+        payConfirmBtn.disabled = !termsCheckbox.checked;
+      });
+    }
+
+    // Click handler for payment options
+    paymentButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.getAttribute('data-value');
+        
+        // Update active selection button
+        paymentButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Update hidden field value
+        paymentMethodInput.value = val;
+
+        // Show matching detail form panel
+        detailPanels.forEach(panel => panel.classList.remove('active'));
+        document.getElementById(`panel-${val}`).classList.add('active');
+
+        // Update submit button text
+        if (val === 'pay_at_store') {
+          payConfirmBtn.textContent = "Confirm Rental Booking";
+        } else {
+          payConfirmBtn.textContent = `Confirm & Pay ₹{{ booking.total_price|floatformat:0 }}`;
+        }
+      });
+    });
+
+    // Card format helper
+    const cardInput = document.getElementById('card_number');
+    if (cardInput) {
+      cardInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+        let formatted = '';
+        for (let i = 0; i < value.length; i++) {
+          if (i > 0 && i % 4 === 0) formatted += ' ';
+          formatted += value[i];
+        }
+        e.target.value = formatted;
+      });
+    }
+
+    const expiryInput = document.getElementById('card_expiry');
+    if (expiryInput) {
+      expiryInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\//g, '').replace(/[^0-9]/gi, '');
+        if (value.length > 2) {
+          e.target.value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        } else {
+          e.target.value = value;
+        }
+      });
+    }
+
+    // Submit handler with simulation delay
+    checkoutForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const method = paymentMethodInput.value;
+
+      if (method !== 'pay_at_store' && !RAZORPAY_ENABLED) {
+        // Simulated gateway loader (only when Razorpay keys are NOT configured)
+        paymentLoader.classList.add('active');
+        
+        setTimeout(() => {
+          checkoutForm.submit();
+        }, 2200); // 2.2 seconds simulated load delay
+      } else {
+        checkoutForm.submit();
+      }
+    });
+  });
+</script>
+{% endblock %}

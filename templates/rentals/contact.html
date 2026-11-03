@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us | WheelsOnRent{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <h1 class="fw-extrabold mb-2">Contact Us</h1>
+      <p class="text-muted mb-4">Questions about a booking, a vehicle, or anything else? Send us a message.</p>
+
+      <div class="premium-card p-4 mb-4">
+        <form method="POST">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+                <div class="text-danger" style="font-size: 12px;">{{ field.errors.0 }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+          <div class="d-grid mt-4">
+            <button type="submit" class="btn btn-custom-primary btn-lg">Send Message</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="row g-4 text-muted mb-5">
+        <div class="col-md-6">
+          <h6 class="fw-bold text-dark">Email</h6>
+          <p>support@wheelsonrent.in</p>
+        </div>
+        <div class="col-md-6">
+          <h6 class="fw-bold text-dark">Phone</h6>
+          <p>+91 98765 43210</p>
+        </div>
+      </div>
+
+      <h4 class="fw-bold mb-3">Visit Your Nearest Branch</h4>
+      <div class="premium-card overflow-hidden" id="contact-branch-map-card">
+        <iframe
+          id="branch-map-iframe"
+          src=""
+          width="100%"
+          height="320"
+          style="border:0; display:block;"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+        <div class="p-3 text-muted" id="contact-branch-map-fallback" style="font-size: 14px;">
+          Detecting your nearest branch to show it on the map…
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

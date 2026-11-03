@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}WheelsOnRent | Search Vehicle Fleet India{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Hero Banner */
+  .hero-section {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.7) 100%), 
+                url('/static/images/thar.jpg') center/cover no-repeat;
+    color: #ffffff;
+    padding: 80px 0;
+    text-align: center;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+
+  .hero-section h1 {
+    font-size: 46px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+
+  .hero-section p {
+    font-size: 18px;
+    opacity: 0.85;
+    max-width: 600px;
+    margin: 0 auto 30px;
+  }
+
+  /* Search Container */
+  .search-wrapper {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* Vehicle Filter Category Bar */
+  .filter-pills {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 40px 0 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 30px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  }
+
+  .filter-pill:hover, .filter-pill.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.2);
+  }
+
+  /* Card Image Frame */
+  .card-img-frame {
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card-img-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .premium-card:hover .card-img-frame img {
+    transform: scale(1.06);
+  }
+
+  /* Card category labels */
+  .type-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--primary-color);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .price-tag {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: var(--accent-color);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 14px;
+    padding: 6px 14px;
+    border-radius: 12px;
+  }
+
+  /* Spec Badges inside vehicle card */
+  .spec-badge {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container">
+      <h1>Explore India on Your Own Wheels</h1>
+      <p>Instant, budget-friendly self-drive rentals. Choose from a wide selection of hatchbacks, robust SUVs, motorcycles, scooters, or bicycles.</p>
+      
+      <!-- Search Form -->
+      <div class="search-wrapper">
+        <form method="GET" action="{% url 'home' %}" class="row g-2">
+          <!-- Retain active type filter if present -->
+          {% if v_type %}
+            <input type="hidden" name="type" value="{{ v_type }}">
+          {% endif %}
+          <div class="col-md-9 col-8">
+            <input type="text" name="q" value="{{ query }}" class="form-control form-control-lg border-0 shadow-none bg-white rounded-3 fs-6" placeholder="Search by name, brand, model..." style="height: 52px;">
+          </div>
+          <div class="col-md-3 col-4 d-grid">
+            <button type="submit" class="btn btn-custom-primary btn-lg" style="height: 52px; font-size: 15px;">Search</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content Container -->
+  <div class="container py-4">
+    
+    <!-- Category Filter pills -->
+    <div class="filter-pills">
+      <a href="?q={{ query }}" class="filter-pill {% if not v_type %}active{% endif %}">All Vehicles</a>
+      <a href="?type=car&q={{ query }}" class="filter-pill {% if v_type == 'car' %}active{% endif %}">Cars</a>
+      <a href="?type=bike&q={{ query }}" class="filter-pill {% if v_type == 'bike' %}active{% endif %}">Bikes / Motorcycles</a>
+      <a href="?type=scooter&q={{ query }}" class="filter-pill {% if v_type == 'scooter' %}active{% endif %}">Scooters / Activa</a>
+      <a href="?type=cycle&q={{ query }}" class="filter-pill {% if v_type == 'cycle' %}active{% endif %}">Cycles</a>
+    </div>
+
+    <!-- Listings Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-2">
+      {% for vehicle in vehicles %}
+        <div class="col">
+          <div class="card premium-card h-100">
+            <!-- Image Frame -->
+            <div class="card-img-frame">
+              <span class="type-badge">{{ vehicle.get_vehicle_type_display }}</span>
+              {% if vehicle.image %}
+                <img src="{{ vehicle.image.url }}" alt="{{ vehicle.name }}">
+              {% else %}
+                <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white">No Image Available</div>
+              {% endif %}
+              <div class="price-tag">₹{{ vehicle.price_per_day|floatformat:0 }}/day</div>
+            </div>
+
+            <!-- Details Body -->
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+              <div>
+                <span class="text-uppercase text-muted fw-bold fs-6" style="letter-spacing: 0.5px; font-size: 12px;">{{ vehicle.brand }}</span>
+                <h4 class="card-title fw-bold text-dark mb-3 mt-1">{{ vehicle.name }} <span class="text-muted fw-light font-monospace" style="font-size: 14px;">({{ vehicle.model_year }})</span></h4>
+                
+                <!-- Specs Badges -->
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                  <span class="spec-badge">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M19 10v1a7 7 0 01-14 0v-1M12 3v10m-3-3l3 3 3-3"></path>
+                    </svg>
+                    {{ vehicle.get_transmission_display }}
+                  </span>
+                  <span class="spec-badge">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path>
+                    </svg>
+                    {{ vehicle.get_fuel_type_display }}
+                  </span>
+                  <span class="spec-badge">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8z"></path>
+                    </svg>
+                    {{ vehicle.seating_capacity }} Seater
+                  </span>
+                </div>
+              </div>
+
+              <!-- Button CTA -->
+              <div class="d-grid mt-2">
+                <a href="{% url 'vehicle_detail' vehicle.pk %}" class="btn btn-custom-primary">View Details & Book</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <!-- Empty list fallback -->
+        <div class="col-12 text-center py-5">
+          <div class="mb-4">
+            <svg width="60" height="60" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" class="text-muted">
+              <path d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="fw-bold text-secondary">No Vehicles Found</h3>
+          <p class="text-muted">We couldn't find any available vehicles matching your criteria. Try adjusting your search query or filters.</p>
+          <a href="{% url 'home' %}" class="btn btn-custom-outline mt-3" style="border-color: var(--primary-color); color: var(--primary-color)">Reset Search</a>
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+{% endblock %}
